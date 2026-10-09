@@ -14,13 +14,14 @@ import android.media.AudioManager
 import android.media.AudioPlaybackConfiguration
 import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.util.Log
 import org.lunaris.dolby.data.DolbyRepository
 
 class DolbyEffectService : Service() {
 
     private val audioManager by lazy { getSystemService(AudioManager::class.java) }
-    private val handler = Handler()
+    private val handler = Handler(Looper.getMainLooper())
     private lateinit var repository: DolbyRepository
 
     private val audioDeviceCallback = object : AudioDeviceCallback() {
@@ -59,11 +60,12 @@ class DolbyEffectService : Service() {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         audioManager.unregisterAudioDeviceCallback(audioDeviceCallback)
         audioManager.unregisterAudioPlaybackCallback(playbackCallback)
         handler.removeCallbacksAndMessages(null)
+        repository.close()
         Log.d(TAG, "Dolby effect service destroyed")
+        super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

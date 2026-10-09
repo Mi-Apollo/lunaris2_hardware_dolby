@@ -94,8 +94,9 @@ class DolbyNotificationListener : NotificationListenerService() {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
+        dolbyRepository.close()
         DolbyConstants.dlog(TAG, "NotificationListener destroyed")
+        super.onDestroy()
     }
 
     companion object {

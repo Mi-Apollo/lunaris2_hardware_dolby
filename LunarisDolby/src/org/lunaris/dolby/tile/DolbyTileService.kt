@@ -10,6 +10,7 @@ import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import org.lunaris.dolby.R
 import org.lunaris.dolby.data.DolbyRepository
+import org.lunaris.dolby.service.DolbyEffectService
 
 class DolbyTileService : TileService() {
 
@@ -24,7 +25,17 @@ class DolbyTileService : TileService() {
         super.onClick()
         val enabled = repository.getDolbyEnabled()
         repository.setDolbyEnabled(!enabled)
+        if (enabled) {
+            DolbyEffectService.stop(this)
+        } else {
+            DolbyEffectService.start(this)
+        }
         updateTile()
+    }
+
+    override fun onDestroy() {
+        repository.close()
+        super.onDestroy()
     }
 
     private fun updateTile() {
@@ -40,7 +51,7 @@ class DolbyTileService : TileService() {
         val profile = repository.getCurrentProfile()
         val profiles = resources.getStringArray(R.array.dolby_profile_entries)
         val profileValues = resources.getStringArray(R.array.dolby_profile_values)
-        
+
         return try {
             val index = profileValues.indexOf(profile.toString())
             if (index != -1) profiles[index] else getString(R.string.dolby_unknown)
