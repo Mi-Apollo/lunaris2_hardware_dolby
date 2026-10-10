@@ -22,6 +22,7 @@ class DolbyEffectService : Service() {
 
     private val audioManager by lazy { getSystemService(AudioManager::class.java) }
     private val handler = Handler(Looper.getMainLooper())
+    private lateinit var effectAnchor: DolbyRepository
     private lateinit var repository: DolbyRepository
 
     private val audioDeviceCallback = object : AudioDeviceCallback() {
@@ -47,6 +48,11 @@ class DolbyEffectService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        // DAP restores its persisted processing state when a second global
+        // AudioEffect client attaches. Keep the first client as an anchor so
+        // service/process recovery does not depend on opening the Dolby UI.
+        effectAnchor = DolbyRepository(this)
+        effectAnchor.applySavedState()
         repository = DolbyRepository(this)
         repository.applySavedState()
         audioManager.registerAudioDeviceCallback(audioDeviceCallback, handler)
@@ -64,6 +70,7 @@ class DolbyEffectService : Service() {
         audioManager.unregisterAudioPlaybackCallback(playbackCallback)
         handler.removeCallbacksAndMessages(null)
         repository.close()
+        effectAnchor.close()
         Log.d(TAG, "Dolby effect service destroyed")
         super.onDestroy()
     }
